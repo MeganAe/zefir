@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_session.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_kit_flutter_new_min_gpl/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_min_gpl/ffmpeg_session.dart';
+import 'package:ffmpeg_kit_flutter_new_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_min_gpl/return_code.dart';
+import 'package:ffmpeg_kit_flutter_new_min_gpl/statistics.dart';
 import '../models/compression_preset.dart';
 import '../models/video_item.dart';
 

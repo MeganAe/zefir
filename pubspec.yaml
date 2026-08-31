@@ -13,7 +13,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
-  ffmpeg_kit_flutter_min_gpl: ^6.0.3
+  ffmpeg_kit_flutter_new_min_gpl: ^2.6.0
   path_provider: ^2.1.4
   share_plus: ^10.0.0
   open_filex: ^4.5.0
