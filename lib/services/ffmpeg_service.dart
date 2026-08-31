@@ -127,7 +127,7 @@ class FFmpegService {
         // Logs de bas niveau FFmpeg si nécessaire
       },
       (Statistics statistics) {
-        final timeMs = statistics.getTime();
+        final timeMs = statistics.getTime().toInt();
         double progress = 0.0;
 
         if (totalDurationMs > 0 && timeMs > 0) {

@@ -50,7 +50,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -69,8 +69,8 @@ class AppTheme {
         indicatorColor: AppColors.accent.withOpacity(0.15),
         elevation: 0,
         height: 64,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -85,8 +85,8 @@ class AppTheme {
             color: AppColors.textMuted,
           );
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.accent, size: 22);
           }
           return const IconThemeData(color: AppColors.textSecondary, size: 22);
