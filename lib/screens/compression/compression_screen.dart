@@ -1,16 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/utils/file_helper.dart';
 import '../../models/compression_preset.dart';
 import '../../models/compression_result.dart';
 import '../../models/video_item.dart';
+import '../../services/favorites_service.dart';
 import '../../services/ffmpeg_service.dart';
 import '../../services/history_service.dart';
 import '../../services/preferences_service.dart';
+import '../../widgets/connected_button_group.dart';
+import '../../widgets/video_preview_card.dart';
+import '../history/history_detail_screen.dart';
+import '../home_navigation_screen.dart';
 import 'widgets/compression_progress_view.dart';
 import 'widgets/compression_summary_card.dart';
 import 'widgets/file_selector_card.dart';
@@ -113,12 +118,16 @@ class _CompressionScreenState extends State<CompressionScreen> {
       _compressionStartTime = DateTime.now();
     });
 
-    final outputPath = await FileHelper.generateOutputPath();
+    final outputPath = await FileHelper.generateOutputPath(
+      extension: await PreferencesService.getOutputFormat());
+
+    final targetHeight = await PreferencesService.getTargetHeight();
+    final argsPreset = _selectedPreset.withTargetHeight(targetHeight);
 
     final success = await FFmpegService.compressVideo(
       inputPath: inputPath,
       outputPath: outputPath,
-      preset: _selectedPreset,
+      preset: argsPreset,
       totalDurationMs: totalDurationMs,
       onProgress: (prog) {
         if (mounted && _status == CompressionStatus.compressing) {
@@ -154,11 +163,25 @@ class _CompressionScreenState extends State<CompressionScreen> {
 
       // Save to persistent history
       await HistoryService().addRecord(result);
+      await FavoritesService().load();
 
       // Check user preference if original should be deleted
       final deleteOriginal = await PreferencesService.getDeleteOriginal();
       if (deleteOriginal) {
         await FileHelper.deleteFile(inputPath);
+      }
+
+      final keepOn = await PreferencesService.getKeepScreenOn();
+      if (keepOn) {
+        try {
+          await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        } catch (_) {}
+      }
+
+      final autoShare = await PreferencesService.getAutoShare();
+      if (autoShare && await File(outputPath).exists()) {
+        await Share.shareXFiles([XFile(outputPath)],
+            text: 'Video compressee avec Zefir (${result.fileName})');
       }
 
       setState(() {
@@ -213,20 +236,35 @@ class _CompressionScreenState extends State<CompressionScreen> {
     );
   }
 
+  Future<void> _openDetail(CompressionResult r) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => HistoryDetailScreen(result: r)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ZEFIR'),
-        actions: [
+      appBar: ZefirTopBar(
+        title: 'Accueil',
+        extraActions: [
           if (_selectedVideo != null && _status == CompressionStatus.idle)
             IconButton(
-              icon: const Icon(Icons.refresh, size: 20),
-              tooltip: 'Réinitialiser',
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Reinitialiser',
               onPressed: _clearSelection,
             ),
         ],
       ),
+      floatingActionButton: _selectedVideo == null
+          ? FloatingActionButton(
+              onPressed: _pickVideo,
+              tooltip: 'Choisir une video',
+              child: const Icon(Icons.edit),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
@@ -244,28 +282,28 @@ class _CompressionScreenState extends State<CompressionScreen> {
 
             // Error notice if any
             if (_errorMessage != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.danger.withOpacity(0.12),
-                  border: Border.all(color: AppColors.danger, width: 1),
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, size: 18, color: AppColors.danger),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+              Card(
+                color: scheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 18, color: scheme.onErrorContainer),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(
+                            color: scheme.onErrorContainer,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -305,18 +343,111 @@ class _CompressionScreenState extends State<CompressionScreen> {
               const SizedBox(height: 20),
 
               // Compression Trigger Action Button
-              ElevatedButton.icon(
+              FilledButton(
                 onPressed: (_selectedVideo != null && _status == CompressionStatus.idle)
                     ? _startCompression
                     : null,
-                icon: const Icon(Icons.tune, size: 18),
-                label: const Text('LANCER LA COMPRESSION'),
+                child: const Text('Lancer la compression'),
               ),
+              const SizedBox(height: 12),
+              if (_selectedVideo != null) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConnectedButtonGroup(
+                    firstLabel: 'Favori',
+                    firstIcon: Icons.favorite_outline,
+                    onFirst: _lastResult == null
+                        ? null
+                        : () => FavoritesService()
+                            .toggle(_lastResult!.id),
+                    secondLabel: 'Partager',
+                    secondIcon: Icons.share_outlined,
+                    onSecond: _lastResult == null
+                        ? null
+                        : _shareCompressedVideo,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                VideoPreviewCard(
+                    video: _selectedVideo, title: 'Apercu source'),
+                const SizedBox(height: 12),
+                _RecentList(onOpen: _openDetail),
+              ],
               const SizedBox(height: 24),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RecentList extends StatelessWidget {
+  final void Function(CompressionResult r) onOpen;
+  const _RecentList({required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: HistoryService(),
+      builder: (context, _) {
+        final items = HistoryService().items.take(3).toList();
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recents', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
+                children: [
+                  for (int i = 0; i < items.length; i++) ...[
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .primaryContainer,
+                        child: Icon(
+                          i == 0
+                              ? Icons.inbox_outlined
+                              : i == 1
+                                  ? Icons.star_outline
+                                  : Icons.archive_outlined,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                        ),
+                      ),
+                      title: Text(items[i].fileName,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(items[i].presetLabel),
+                      trailing:
+                          const Icon(Icons.chevron_right_rounded),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: i == 0
+                              ? const Radius.circular(28)
+                              : const Radius.circular(8),
+                          bottom: i == items.length - 1
+                              ? const Radius.circular(28)
+                              : const Radius.circular(8),
+                        ),
+                      ),
+                      onTap: () => onOpen(items[i]),
+                    ),
+                    if (i != items.length - 1)
+                      const SizedBox(height: 3),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

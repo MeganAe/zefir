@@ -32,4 +32,46 @@ class PreferencesService {
     final prefs = await _instance;
     await prefs.setBool(AppConstants.deleteOriginalKey, value);
   }
+
+  static Future<bool> getKeepScreenOn() async {
+    final prefs = await _instance;
+    return prefs.getBool(AppConstants.keepScreenOnKey) ?? true;
+  }
+
+  static Future<void> setKeepScreenOn(bool value) async {
+    final prefs = await _instance;
+    await prefs.setBool(AppConstants.keepScreenOnKey, value);
+  }
+
+  static Future<bool> getAutoShare() async {
+    final prefs = await _instance;
+    return prefs.getBool(AppConstants.autoShareKey) ?? false;
+  }
+
+  static Future<void> setAutoShare(bool value) async {
+    final prefs = await _instance;
+    await prefs.setBool(AppConstants.autoShareKey, value);
+  }
+
+  static Future<int> getTargetHeight() async {
+    final prefs = await _instance;
+    return prefs.getInt(AppConstants.targetHeightKey) ??
+        AppConstants.defaultTargetHeight;
+  }
+
+  static Future<void> setTargetHeight(int value) async {
+    final prefs = await _instance;
+    await prefs.setInt(AppConstants.targetHeightKey, value);
+  }
+
+  static Future<String> getOutputFormat() async {
+    final prefs = await _instance;
+    return prefs.getString(AppConstants.outputFormatKey) ?? 'mp4';
+  }
+
+  static Future<void> setOutputFormat(String value) async {
+    final prefs = await _instance;
+    await prefs.setString(AppConstants.outputFormatKey, value);
+  }
 }
+

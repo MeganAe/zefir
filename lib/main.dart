@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
-import 'core/theme/app_theme.dart';
+import 'services/favorites_service.dart';
 import 'services/history_service.dart';
 import 'services/preferences_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configuration du style de la barre système
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.surface,
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFFEEEDF3),
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
-  // Initialisation des services essentiels
   await PreferencesService.init();
   await HistoryService().loadHistory();
+  await FavoritesService().load();
 
   runApp(const ZefirApp());
 }
+

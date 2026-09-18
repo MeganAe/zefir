@@ -23,6 +23,22 @@ class CompressionPreset {
     required this.type,
   });
 
+  CompressionPreset withTargetHeight(int targetHeight) {
+    if (type == PresetType.highQuality) return this;
+    final filter = 'scale=-2:min($targetHeight\\,ih)';
+    return CompressionPreset(
+      id: id,
+      label: label,
+      technicalSummary: technicalSummary,
+      description: description,
+      crf: crf,
+      scaleFilter: filter,
+      presetSpeed: presetSpeed,
+      audioBitrate: audioBitrate,
+      type: type,
+    );
+  }
+
   /// Construit la commande d'arguments FFmpeg pour ce profil
   List<String> buildArgs(String inputPath, String outputPath) {
     List<String> args = [

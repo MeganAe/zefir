@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/compression_result.dart';
 import '../../services/history_service.dart';
+import 'history_detail_screen.dart';
 import 'widgets/history_item_tile.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -24,6 +24,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (!_historyService.isLoaded) {
       _historyService.loadHistory();
     }
+  }
+
+  Future<void> _openDetail(CompressionResult item) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => HistoryDetailScreen(result: item)),
+    );
   }
 
   Future<void> _openFile(CompressionResult item) async {
@@ -51,32 +58,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceElevated,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(color: AppColors.border, width: 1),
-          borderRadius: BorderRadius.all(Radius.circular(4)),
-        ),
-        title: const Text(
-          'SUPPRESSION',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.0,
-          ),
-        ),
-        content: Text(
-          'Supprimer "${item.fileName}" de l\'historique et effacer le fichier compressé ?',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
+        title: const Text('Suppression'),
+        content: Text('Supprimer "${item.fileName}" et son fichier ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ANNULER', style: TextStyle(color: AppColors.textMuted)),
+            child: const Text('Annuler'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('SUPPRIMER', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700)),
+            child: const Text('Supprimer'),
           ),
         ],
       ),
@@ -84,7 +75,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     if (confirm == true) {
       await _historyService.deleteRecord(item.id);
-      _showSnackbar('Élément supprimé de l\'historique.');
+      _showSnackbar('Element supprime.');
     }
   }
 
@@ -92,32 +83,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceElevated,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(color: AppColors.border, width: 1),
-          borderRadius: BorderRadius.all(Radius.circular(4)),
-        ),
-        title: const Text(
-          'EFFACER TOUT L\'HISTORIQUE',
-          style: TextStyle(
-            color: AppColors.danger,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.0,
-          ),
-        ),
-        content: const Text(
-          'Cette action va effacer tous les enregistrements et purger les fichiers compressés associés.',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
+        title: const Text('Tout effacer ?'),
+        content: const Text('Effacer tout l\'historique et les fichiers ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ANNULER', style: TextStyle(color: AppColors.textMuted)),
+            child: const Text('Annuler'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('TOUT EFFACER', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w800)),
+            child: const Text('Tout effacer'),
           ),
         ],
       ),
@@ -125,7 +100,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     if (confirm == true) {
       await _historyService.clearAll();
-      _showSnackbar('Historique entièrement purgé.');
+      _showSnackbar('Historique purge.');
     }
   }
 
@@ -139,15 +114,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('HISTORIQUE'),
+        title: const Text('Historique'),
         actions: [
           ListenableBuilder(
             listenable: _historyService,
             builder: (context, _) {
-              if (_historyService.items.isEmpty) return const SizedBox.shrink();
+              if (_historyService.items.isEmpty) {
+                return const SizedBox.shrink();
+              }
               return IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined, size: 22, color: AppColors.danger),
-                tooltip: 'Purger tout l\'historique',
+                icon: Icon(Icons.delete_sweep_outlined,
+                    color: Theme.of(context).colorScheme.error),
+                tooltip: 'Tout effacer',
                 onPressed: _confirmClearAll,
               );
             },
@@ -160,42 +138,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
           final items = _historyService.items;
 
           if (items.isEmpty) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border.all(color: AppColors.border, width: 1),
-                      borderRadius: const BorderRadius.all(Radius.circular(4)),
-                    ),
-                    child: const Icon(
-                      Icons.history_outlined,
-                      size: 28,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'AUCUN ENREGISTREMENT',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Les vidéos compressées apparaîtront dans ce journal.',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
-                  ),
+                  Icon(Icons.history_outlined, size: 40),
+                  SizedBox(height: 16),
+                  Text('Aucun enregistrement'),
+                  SizedBox(height: 6),
+                  Text('Les videos compressees apparaitront ici.'),
                 ],
               ),
             );
@@ -205,67 +156,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           return CustomScrollView(
             slivers: [
-              // Summary Banner
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border.all(color: AppColors.border, width: 1),
-                      borderRadius: const BorderRadius.all(Radius.circular(4)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'ÉCONOMIE TOTALE CUMULÉE',
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              totalSavedStr,
-                              style: const TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text(
-                              'FICHIERS TRAITÉS',
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${items.length}',
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Economie totale'),
+                              Text(totalSavedStr),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Fichiers'),
+                              Text('${items.length}'),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -282,7 +198,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: HistoryItemTile(
                           item: item,
-                          onOpen: () => _openFile(item),
+                          onOpen: () => _openDetail(item),
                           onShare: () => _shareFile(item),
                           onDelete: () => _confirmDelete(item),
                         ),

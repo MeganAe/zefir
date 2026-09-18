@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../models/compression_preset.dart';
 
 class PresetSelector extends StatelessWidget {
@@ -21,15 +20,7 @@ class PresetSelector extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.only(left: 2, bottom: 8),
-          child: Text(
-            'PROFIL D\'ENCODAGE',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-            ),
-          ),
+          child: Text('Profil d\'encodage'),
         ),
         ListView.separated(
           shrinkWrap: true,
@@ -42,25 +33,26 @@ class PresetSelector extends StatelessWidget {
 
             return InkWell(
               onTap: isEnabled ? () => onSelectPreset(preset) : null,
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.surfaceElevated : AppColors.surface,
-                  border: Border.all(
-                    color: isSelected ? AppColors.accent : AppColors.border,
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.secondaryContainer
+                      : Theme.of(context).colorScheme.surfaceContainerLow,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(20)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                      size: 18,
-                      color: isSelected ? AppColors.accent : AppColors.textMuted,
+                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                      size: 20,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outline,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -72,31 +64,32 @@ class PresetSelector extends StatelessWidget {
                             children: [
                               Text(
                                 preset.label,
-                                style: TextStyle(
-                                  color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall,
                               ),
                               Text(
                                 preset.technicalSummary,
-                                style: const TextStyle(
-                                  color: AppColors.textMuted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             preset.description,
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11,
-                              height: 1.3,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant),
                           ),
                         ],
                       ),

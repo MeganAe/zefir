@@ -10,10 +10,10 @@ class ZefirApp extends StatelessWidget {
     return MaterialApp(
       title: 'Zefir',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
       home: const HomeNavigationScreen(),
     );
   }
 }
+
