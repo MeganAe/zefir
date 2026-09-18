@@ -1,25 +1,37 @@
 import 'package:flutter/material.dart';
+
 import '../../models/compression_result.dart';
 import '../../services/favorites_service.dart';
 import '../../services/history_service.dart';
-import '../history/history_detail_screen.dart';
+import '../../services/preferences_service.dart';
+import '../history/history_actions.dart';
+import '../history/widgets/history_item_tile.dart';
 import '../home_navigation_screen.dart';
 
-/// Ecran Favoris : resultats marques d'une etoile.
+/// Écran Favoris : résultats marqués d'un cœur, avec miniatures et lecture.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
+
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  final _history = HistoryService();
-  final _favorites = FavoritesService();
+  final HistoryService _history = HistoryService();
+  final FavoritesService _favorites = FavoritesService();
+  bool _showThumbnails = true;
 
   @override
   void initState() {
     super.initState();
+    _history.loadHistory();
     _favorites.load();
+    _loadThumbnailPreference();
+  }
+
+  Future<void> _loadThumbnailPreference() async {
+    final thumbs = await PreferencesService.getShowThumbnails();
+    if (mounted) setState(() => _showThumbnails = thumbs);
   }
 
   @override
@@ -33,68 +45,70 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               .where((e) => _favorites.isFavorite(e.id))
               .toList();
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.favorite_outline,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(height: 12),
-                    Text('Aucun favori',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Touchez l’etoile pour retrouver un resultat ici.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return const _EmptyFavorites();
           }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final CompressionResult item = items[i];
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    child: Icon(Icons.movie_outlined,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimaryContainer),
-                  ),
-                  title: Text(item.fileName,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(item.presetLabel),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.favorite, color: Colors.red),
-                    onPressed: () => _favorites.toggle(item.id),
-                  ),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => HistoryDetailScreen(result: item)),
-                  ),
-                ),
+              return HistoryItemTile(
+                item: item,
+                isFavorite: true,
+                showThumbnail: _showThumbnails,
+                onOpen: () => HistoryActions.open(context, item),
+                onPlay: () => HistoryActions.play(context, item),
+                onShare: () => HistoryActions.share(context, item),
+                onDelete: () => HistoryActions.confirmDelete(context, item),
+                onToggleFavorite: () =>
+                    HistoryActions.toggleFavorite(context, item),
               );
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _EmptyFavorites extends StatelessWidget {
+  const _EmptyFavorites();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHigh,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.favorite_outline,
+                  size: 40, color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            Text('Aucun favori',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              'Touchez le cœur d\'un résultat de l\'historique pour le '
+              'retrouver ici, miniature et lecture incluses.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

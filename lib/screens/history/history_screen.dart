@@ -9,7 +9,6 @@ import '../../models/compression_result.dart';
 import '../../services/favorites_service.dart';
 import '../../services/history_service.dart';
 import '../../services/preferences_service.dart';
-import '../../widgets/stats_sheet.dart';
 import '../home_navigation_screen.dart';
 import '../preview/video_player_screen.dart';
 import 'history_detail_screen.dart';
@@ -33,6 +32,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   String _query = '';
   String _sort = AppConstants.defaultSort;
+  bool _showThumbnails = true;
 
   /// `null` = aucun filtre de profil ; sinon libellé exact du profil.
   String? _presetFilter;
@@ -60,8 +60,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _loadPreferredSort() async {
     final sort = await PreferencesService.getDefaultSort();
-    if (mounted && AppConstants.sortLabels.containsKey(sort)) {
-      setState(() => _sort = sort);
+    final thumbs = await PreferencesService.getShowThumbnails();
+    if (mounted) {
+      setState(() {
+        if (AppConstants.sortLabels.containsKey(sort)) _sort = sort;
+        _showThumbnails = thumbs;
+      });
     }
   }
 
@@ -101,6 +105,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
       _presetFilter = null;
       _searchController.clear();
     });
+  }
+
+  /// Feuille de tri M3 : liste radio des critères disponibles.
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: RadioGroup<String>(
+          groupValue: _sort,
+          onChanged: (value) {
+            Navigator.pop(context);
+            if (value != null) _updateSort(value);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Trier par',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+              ),
+              ...AppConstants.sortLabels.entries.map(
+                (entry) => RadioListTile<String>(
+                  value: entry.key,
+                  title: Text(entry.value),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------- actions
@@ -248,7 +289,140 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  // ------------------------------------------------------------- composants
+
+  /// Bandeau de synthèse : économies cumulées + accès aux statistiques.
+  Widget _buildOverview(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Card(
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.savings_rounded,
+                size: 20, color: scheme.onPrimaryContainer),
+          ),
+          title: Text(
+            Formatters.formatBytes(_historyService.totalSavedBytes),
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            'économisés sur ${_historyService.totalVideosCompressed} vidéo(s)',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.insights_rounded),
+            tooltip: 'Statistiques détaillées',
+            onPressed: () => showStatsSheet(context),
+          ),
+        ),
       ),
+    );
+  }
+
+  /// Champ de recherche M3 (pilule, surfaceContainerHigh).
+  Widget _buildSearchField(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: SearchBar(
+        controller: _searchController,
+        hintText: 'Rechercher un fichier, un profil…',
+        constraints: const BoxConstraints(minHeight: 52),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant),
+        ),
+        trailing: [
+          if (_query.isNotEmpty || _hasActiveFilter)
+            IconButton(
+              icon: const Icon(Icons.close_rounded, size: 20),
+              tooltip: 'Effacer la recherche',
+              onPressed: _resetFilters,
+            ),
+        ],
+        onChanged: (value) => setState(() => _query = value),
+      ),
+    );
+  }
+
+  /// Rangée de chips de filtrage : tri, favoris, profils présents.
+  Widget _buildSortRow(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 56,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          ActionChip(
+            avatar: Icon(Icons.sort_rounded,
+                size: 18, color: scheme.onSurfaceVariant),
+            label: Text(AppConstants.sortLabels[_sort] ?? 'Trier'),
+            onPressed: _showSortSheet,
+          ),
+          const SizedBox(width: 8),
+          FilterChip(
+            avatar: Icon(
+              _onlyFavorites ? Icons.favorite_rounded : Icons.favorite_outline,
+              size: 18,
+              color: _onlyFavorites ? scheme.error : scheme.onSurfaceVariant,
+            ),
+            label: const Text('Favoris'),
+            selected: _onlyFavorites,
+            onSelected: (value) => setState(() => _onlyFavorites = value),
+          ),
+          for (final preset in _availablePresets) ...[
+            const SizedBox(width: 8),
+            FilterChip(
+              label: Text(preset),
+              selected: _presetFilter == preset,
+              onSelected: (value) =>
+                  setState(() => _presetFilter = value ? preset : null),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Liste des résultats filtrés + triés, tuiles M3 Expressive.
+  Widget _buildList(BuildContext context) {
+    final items = _visibleItems;
+    if (items.isEmpty) {
+      return _NoResults(onReset: _resetFilters);
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return HistoryItemTile(
+          item: item,
+          showThumbnail: _showThumbnails,
+          isFavorite: _favoritesService.isFavorite(item.id),
+          onOpen: () => _openDetail(item),
+          onPlay: () => _playFile(item),
+          onShare: () => _shareFile(item),
+          onDelete: () => _confirmDelete(item),
+          onToggleFavorite: () => _toggleFavorite(item),
+        );
+      },
     );
   }
 
@@ -273,3 +447,98 @@ class _HistoryScreenState extends State<HistoryScreen> {
           : 'Retiré des favoris.',
     );
   }
+}
+
+/// État vide : aucun enregistrement dans l'historique.
+class _EmptyHistory extends StatelessWidget {
+  final VoidCallback onPick;
+
+  const _EmptyHistory({required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHigh,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.history_rounded,
+                  size: 40, color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            Text('Historique vide',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              'Compressez votre première vidéo : elle apparaîtra ici avec '
+              'ses statistiques d\'économie d\'espace.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onPick,
+              icon: const Icon(Icons.compress_rounded),
+              label: const Text('Compresser une vidéo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// État vide : la recherche / les filtres ne renvoient rien.
+class _NoResults extends StatelessWidget {
+  final VoidCallback onReset;
+
+  const _NoResults({required this.onReset});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off_rounded,
+                size: 56, color: scheme.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text('Aucun résultat',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Aucune vidéo ne correspond à votre recherche ou aux filtres '
+              'actifs.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: onReset,
+              icon: const Icon(Icons.filter_alt_off_outlined, size: 18),
+              label: const Text('Réinitialiser les filtres'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

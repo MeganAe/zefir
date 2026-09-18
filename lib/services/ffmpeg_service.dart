@@ -97,9 +97,14 @@ class FFmpegService {
     required CompressionPreset preset,
     required int totalDurationMs,
     required void Function(CompressionProgress progress) onProgress,
+    bool hwaccelDecode = false,
   }) async {
     final completer = Completer<bool>();
-    final args = preset.buildArgs(inputPath, outputPath);
+    final args = preset.buildArgs(
+      inputPath,
+      outputPath,
+      hwaccelDecode: hwaccelDecode,
+    );
 
     final session = await FFmpegKit.executeWithArgumentsAsync(
       args,

@@ -56,15 +56,26 @@ class CompressionPreset {
   }
 
   /// Construit la commande d'arguments FFmpeg pour ce profil
-  List<String> buildArgs(String inputPath, String outputPath) {
-    List<String> args = [
-      '-y', // Écrase le fichier de sortie si existant
+  ///
+  /// [hwaccelDecode] ajoute `-hwaccel auto` avant l'entrée : le décodage
+  /// matériel est utilisé quand il est disponible, avec repli logiciel
+  /// automatique de FFmpeg dans le cas contraire.
+  List<String> buildArgs(
+    String inputPath,
+    String outputPath, {
+    bool hwaccelDecode = false,
+  }) {
+    final args = <String>['-y'];
+    if (hwaccelDecode) {
+      args.addAll(['-hwaccel', 'auto']);
+    }
+    args.addAll([
       '-i', inputPath,
       '-c:v', 'libx264',
       '-crf', crf.toString(),
       '-preset', presetSpeed,
       '-pix_fmt', 'yuv420p',
-    ];
+    ]);
 
     if (scaleFilter != null && scaleFilter!.isNotEmpty) {
       args.addAll(['-vf', scaleFilter!]);

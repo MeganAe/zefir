@@ -1,4 +1,4 @@
-name: Build & Release Zefir APK
+name: Build & Release Zefir
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Analyze, Test, Build Signed APK + AAB
     runs-on: ubuntu-latest
 
     steps:
@@ -22,9 +22,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Flutter
+      - name: Set up Flutter (version épinglée)
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.44.5'
           channel: 'stable'
           cache: true
 
@@ -37,11 +38,43 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build APK (Release)
+      # ----- Signature release (keystore éphémère, régénéré à chaque build) -----
+      # Remplaçable plus tard par des secrets GitHub (KEYSTORE_BASE64, etc.)
+      # sans toucher au reste du pipeline.
+      - name: Generate ephemeral release keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore zefir-upload.jks \
+            -storetype JKS \
+            -alias zefir \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass zefir-ci-keystore -keypass zefir-ci-key \
+            -dname "CN=Zefir, OU=Mobile, O=Metoushael, C=FR"
+
+      - name: Write key.properties
+        run: |
+          cat > key.properties <<EOF
+          storeFile=../../zefir-upload.jks
+          storePassword=zefir-ci-keystore
+          keyAlias=zefir
+          keyPassword=zefir-ci-key
+          EOF
+
+      - name: Build signed APK (Release)
         run: flutter build apk --release
 
-      - name: Upload APK artifact
+      - name: Build signed App Bundle (Release)
+        run: flutter build appbundle --release
+
+      - name: Upload signed APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: zefir-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload signed AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zefir-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+

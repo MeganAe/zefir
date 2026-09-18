@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/utils/file_helper.dart';
 import '../../models/compression_preset.dart';
@@ -16,6 +15,7 @@ import '../../widgets/connected_button_group.dart';
 import '../../widgets/video_preview_card.dart';
 import '../history/history_detail_screen.dart';
 import '../home_navigation_screen.dart';
+import '../preview/video_player_screen.dart';
 import 'widgets/compression_progress_view.dart';
 import 'widgets/compression_summary_card.dart';
 import 'widgets/file_selector_card.dart';
@@ -122,13 +122,18 @@ class _CompressionScreenState extends State<CompressionScreen> {
       extension: await PreferencesService.getOutputFormat());
 
     final targetHeight = await PreferencesService.getTargetHeight();
-    final argsPreset = _selectedPreset.withTargetHeight(targetHeight);
+    final audioBitrate = await PreferencesService.getCustomAudioBitrate();
+    final hwAccel = await PreferencesService.getHardwareAccel();
+    final argsPreset = _selectedPreset
+        .withTargetHeight(targetHeight)
+        .withAudioBitrate(audioBitrate);
 
     final success = await FFmpegService.compressVideo(
       inputPath: inputPath,
       outputPath: outputPath,
       preset: argsPreset,
       totalDurationMs: totalDurationMs,
+      hwaccelDecode: hwAccel,
       onProgress: (prog) {
         if (mounted && _status == CompressionStatus.compressing) {
           setState(() {
@@ -188,6 +193,11 @@ class _CompressionScreenState extends State<CompressionScreen> {
         _status = CompressionStatus.completed;
         _lastResult = result;
       });
+
+      final autoPlay = await PreferencesService.getAutoPlayResult();
+      if (autoPlay && mounted && await File(outputPath).exists()) {
+        await _openPlayer(outputPath, result.fileName);
+      }
     } else {
       // Cleanup failed or aborted output file
       await FileHelper.deleteFile(outputPath);
@@ -211,10 +221,27 @@ class _CompressionScreenState extends State<CompressionScreen> {
     if (_lastResult == null) return;
     final file = File(_lastResult!.compressedPath);
     if (await file.exists()) {
-      await OpenFilex.open(_lastResult!.compressedPath);
+      await _openPlayer(_lastResult!.compressedPath, _lastResult!.fileName);
     } else {
       _showSnackbar('Fichier introuvable sur le stockage local.');
     }
+  }
+
+  /// Ouvre le lecteur intégré. En cas d'échec de lecture, l'écran du lecteur
+  /// affiche son propre repli « Ouvrir avec… ».
+  Future<void> _openPlayer(String path, String title) async {
+    final file = File(path);
+    if (!await file.exists()) {
+      _showSnackbar('Fichier introuvable sur le stockage local.');
+      return;
+    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoPlayerScreen(path: path, title: title),
+      ),
+    );
   }
 
   Future<void> _shareCompressedVideo() async {
