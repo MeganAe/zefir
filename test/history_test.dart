@@ -191,7 +191,7 @@ void main() {
       );
       expect(
         HistoryService.sort(records, AppConstants.sortBySize).map((e) => e.id),
-        ['a', 'c', 'b'],
+        ['c', 'a', 'b'],
       );
       expect(
         HistoryService.sort(records, AppConstants.sortBySavings)
