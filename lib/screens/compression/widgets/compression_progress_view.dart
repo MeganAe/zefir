@@ -13,7 +13,9 @@ class CompressionProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentInt = (progress.percentage * 100).toInt();
+    final scheme = Theme.of(context).colorScheme;
+    final percent = (progress.percentage * 100).clamp(0, 100).toDouble();
+    final percentInt = percent.toInt();
 
     return Card(
       child: Padding(
@@ -22,49 +24,94 @@ class CompressionProgressView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text(progress.stage)),
-                Text('$percentInt%'),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.bolt_rounded,
+                      size: 22, color: scheme.onPrimaryContainer),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Compression en cours',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 2),
+                      Text(
+                        progress.stage,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text('$percentInt%',
+                    style: Theme.of(context).textTheme.headlineSmall),
               ],
             ),
-          const SizedBox(height: 16),
-          LinearProgressIndicator(
-            value: progress.percentage > 0 ? progress.percentage : null,
-            minHeight: 6,
-          ),
-          const SizedBox(height: 16),
-          // Technical Telemetry
-          Row(
-            children: [
-              _buildTelemetryItem(
-                context: context,
-                label: 'Cadence',
-                value: progress.fps > 0 ? '${progress.fps.toStringAsFixed(0)} fps' : '--',
+
+            const SizedBox(height: 18),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.percentage > 0 ? percent / 100 : null,
+                minHeight: 8,
               ),
-              const SizedBox(width: 8),
-              _buildTelemetryItem(
-                context: context,
-                label: 'Debit',
-                value: progress.bitrate > 0 ? '${(progress.bitrate / 1000).toStringAsFixed(0)} kbps' : '--',
-              ),
-              const SizedBox(width: 8),
-              _buildTelemetryItem(
-                context: context,
-                label: 'Temps',
-                value: '${(progress.timeMs / 1000).toStringAsFixed(1)}s',
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: onCancel,
-              child: const Text('Interrompre'),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 18),
+
+            // Technical telemetry
+            Row(
+              children: [
+                _buildTelemetryItem(
+                  context: context,
+                  label: 'Cadence',
+                  value: progress.fps > 0
+                      ? '${progress.fps.toStringAsFixed(0)} ips'
+                      : '--',
+                ),
+                const SizedBox(width: 8),
+                _buildTelemetryItem(
+                  context: context,
+                  label: 'Débit',
+                  value: progress.bitrate > 0
+                      ? '${(progress.bitrate / 1000).toStringAsFixed(0)} kbps'
+                      : '--',
+                ),
+                const SizedBox(width: 8),
+                _buildTelemetryItem(
+                  context: context,
+                  label: 'Temps',
+                  value: '${(progress.timeMs / 1000).toStringAsFixed(1)}s',
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onCancel,
+                icon: const Icon(Icons.stop_circle_outlined, size: 20),
+                label: const Text('Interrompre'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

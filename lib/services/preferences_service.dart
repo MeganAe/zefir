@@ -73,5 +73,57 @@ class PreferencesService {
     final prefs = await _instance;
     await prefs.setString(AppConstants.outputFormatKey, value);
   }
+
+  static Future<int> getCustomAudioBitrate() async {
+    final prefs = await _instance;
+    return prefs.getInt(AppConstants.customAudioBitrateKey) ??
+        AppConstants.defaultAudioBitrate;
+  }
+
+  static Future<void> setCustomAudioBitrate(int kbps) async {
+    final prefs = await _instance;
+    await prefs.setInt(AppConstants.customAudioBitrateKey, kbps);
+  }
+
+  static Future<bool> getHardwareAccel() async {
+    final prefs = await _instance;
+    return prefs.getBool(AppConstants.hardwareAccelKey) ?? false;
+  }
+
+  static Future<void> setHardwareAccel(bool value) async {
+    final prefs = await _instance;
+    await prefs.setBool(AppConstants.hardwareAccelKey, value);
+  }
+
+  static Future<bool> getShowThumbnails() async {
+    final prefs = await _instance;
+    return prefs.getBool(AppConstants.showThumbnailsKey) ?? true;
+  }
+
+  static Future<void> setShowThumbnails(bool value) async {
+    final prefs = await _instance;
+    await prefs.setBool(AppConstants.showThumbnailsKey, value);
+  }
+
+  static Future<bool> getAutoPlayResult() async {
+    final prefs = await _instance;
+    return prefs.getBool(AppConstants.autoPlayResultKey) ?? false;
+  }
+
+  static Future<void> setAutoPlayResult(bool value) async {
+    final prefs = await _instance;
+    await prefs.setBool(AppConstants.autoPlayResultKey, value);
+  }
+
+  static Future<String> getDefaultSort() async {
+    final prefs = await _instance;
+    return prefs.getString(AppConstants.defaultSortKey) ??
+        AppConstants.defaultSort;
+  }
+
+  static Future<void> setDefaultSort(String value) async {
+    final prefs = await _instance;
+    await prefs.setString(AppConstants.defaultSortKey, value);
+  }
 }
 

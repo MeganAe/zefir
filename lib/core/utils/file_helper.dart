@@ -36,10 +36,52 @@ class FileHelper {
     return false;
   }
 
+  /// Vérifie l'existence d'un fichier local.
+  static Future<bool> fileExists(String filePath) async {
+    if (filePath.isEmpty) return false;
+    try {
+      return await File(filePath).exists();
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Extrait le nom de fichier propre depuis un chemin absolu
   static String getFileName(String path) {
     if (path.isEmpty) return 'inconnu.mp4';
     return path.split(Platform.pathSeparator).last;
+  }
+
+  /// Nombre de fichiers présents dans le dossier de sortie.
+  static Future<int> outputsFileCount() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final zefirDir = Directory('${dir.path}/ZefirOutputs');
+      if (!await zefirDir.exists()) return 0;
+      int count = 0;
+      await for (final entity in zefirDir.list()) {
+        if (entity is File) count++;
+      }
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Espace total occupé par les fichiers de sortie, en octets.
+  static Future<int> outputsTotalSize() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final zefirDir = Directory('${dir.path}/ZefirOutputs');
+      if (!await zefirDir.exists()) return 0;
+      int total = 0;
+      await for (final entity in zefirDir.list()) {
+        if (entity is File) total += await entity.length();
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
   }
 
   /// Nettoie tous les fichiers de sortie temporaires
@@ -50,7 +92,7 @@ class FileHelper {
       if (await zefirDir.exists()) {
         int count = 0;
         final entities = zefirDir.listSync();
-        for (var entity in entities) {
+        for (final entity in entities) {
           if (entity is File) {
             await entity.delete();
             count++;

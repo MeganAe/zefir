@@ -39,6 +39,22 @@ class CompressionPreset {
     );
   }
 
+  /// Remplace le débit audio (kbps) — utilisé par le réglage applicatif.
+  CompressionPreset withAudioBitrate(int kbps) {
+    if (kbps <= 0) return this;
+    return CompressionPreset(
+      id: id,
+      label: label,
+      technicalSummary: technicalSummary,
+      description: description,
+      crf: crf,
+      scaleFilter: scaleFilter,
+      presetSpeed: presetSpeed,
+      audioBitrate: '${kbps}k',
+      type: type,
+    );
+  }
+
   /// Construit la commande d'arguments FFmpeg pour ce profil
   List<String> buildArgs(String inputPath, String outputPath) {
     List<String> args = [
