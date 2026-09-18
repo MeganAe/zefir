@@ -29,14 +29,15 @@ class ThumbnailService {
   /// Hash FNV-1a 64 bits : déterministe entre les sessions (contrairement à
   /// `String.hashCode` qui n'est pas garanti stable).
   static String _hash(String input) {
-    const int offset = 0xcbf29ce484222325;
-    const int prime = 0x100000001b3;
+    // Variante 32 bits : compatible avec la représentation des entiers Web.
+    const int offset = 0x811c9dc5;
+    const int prime = 0x01000193;
     int hash = offset;
     for (final unit in input.codeUnits) {
       hash ^= unit;
-      hash = (hash * prime) & 0xFFFFFFFFFFFFFFFF;
+      hash = (hash * prime) & 0xFFFFFFFF;
     }
-    return hash.toRadixString(16).padLeft(16, '0');
+    return hash.toUnsigned(32).toRadixString(16).padLeft(8, '0');
   }
 
   static Future<File?> _cachedFile(String videoPath) async {
@@ -55,7 +56,9 @@ class ThumbnailService {
 
     try {
       final cached = await _cachedFile(videoPath);
-      if (cached != null && await cached.exists() && await cached.length() > 0) {
+      if (cached != null &&
+          await cached.exists() &&
+          await cached.length() > 0) {
         _memo[videoPath] = cached;
         return cached;
       }
