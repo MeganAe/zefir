@@ -13,11 +13,13 @@ import 'settings/settings_screen.dart';
 class ZefirNavigation extends InheritedWidget {
   final int index;
   final ValueChanged<int> goTo;
+  final VoidCallback? openMenu;
 
   const ZefirNavigation({
     super.key,
     required this.index,
     required this.goTo,
+    this.openMenu,
     required super.child,
   });
 
@@ -44,6 +46,7 @@ class HomeNavigationScreen extends StatefulWidget {
 
 class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   int _index = ZefirNavigation.homeTab;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   static const _screens = [
     CompressionScreen(),
@@ -57,37 +60,123 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
     setState(() => _index = index);
   }
 
+  void _openMenu() => _scaffoldKey.currentState?.openDrawer();
+
   @override
   Widget build(BuildContext context) {
     return ZefirNavigation(
       index: _index,
       goTo: _goTo,
+      openMenu: _openMenu,
       child: Scaffold(
-        body: IndexedStack(index: _index, children: _screens),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _goTo,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Accueil',
-            ),
-            NavigationDestination(
+        key: _scaffoldKey,
+        drawer: _SideNavigation(selectedIndex: _index, onSelect: _goTo),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final content = IndexedStack(index: _index, children: _screens);
+            if (constraints.maxWidth < 900) return content;
+            return Row(
+              children: [
+                _RailNavigation(selectedIndex: _index, onSelect: _goTo),
+                const VerticalDivider(width: 1),
+                Expanded(child: content),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RailNavigation extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _RailNavigation({required this.selectedIndex, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) => NavigationRail(
+        extended: true,
+        minExtendedWidth: 232,
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onSelect,
+        leading: const Padding(
+          padding: EdgeInsets.fromLTRB(20, 28, 20, 30),
+          child: ZefirLogo(size: 38),
+        ),
+        destinations: const [
+          NavigationRailDestination(
+              icon: Icon(Icons.play_circle_outline),
+              selectedIcon: Icon(Icons.play_circle),
+              label: Text('Compresser')),
+          NavigationRailDestination(
               icon: Icon(Icons.search_outlined),
-              selectedIcon: Icon(Icons.search_rounded),
-              label: 'Recherche',
+              selectedIcon: Icon(Icons.search),
+              label: Text('Recherche')),
+          NavigationRailDestination(
+              icon: Icon(Icons.bookmark_border),
+              selectedIcon: Icon(Icons.bookmark),
+              label: Text('Favoris')),
+          NavigationRailDestination(
+              icon: Icon(Icons.tune_outlined),
+              selectedIcon: Icon(Icons.tune),
+              label: Text('Réglages')),
+        ],
+      );
+}
+
+class _SideNavigation extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _SideNavigation({required this.selectedIndex, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      (Icons.play_circle_outline, 'Compresser'),
+      (Icons.search_outlined, 'Recherche'),
+      (Icons.bookmark_border, 'Favoris'),
+      (Icons.tune_outlined, 'Réglages'),
+    ];
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+                padding: EdgeInsets.fromLTRB(24, 22, 24, 28),
+                child: ZefirLogo(size: 40)),
+            for (var i = 0; i < items.length; i++)
+              _DrawerEntry(
+                icon: items[i].$1,
+                label: items[i].$2,
+                selected: i == selectedIndex,
+                onTap: () {
+                  Navigator.pop(context);
+                  onSelect(i);
+                },
+              ),
+            const Spacer(),
+            const Divider(color: Color(0xFF35425C)),
+            _DrawerEntry(
+              icon: Icons.history,
+              label: 'Historique',
+              onTap: () {
+                Navigator.pop(context);
+                openHistory(context);
+              },
             ),
-            NavigationDestination(
-              icon: Icon(Icons.favorite_outline),
-              selectedIcon: Icon(Icons.favorite_rounded),
-              label: 'Favoris',
+            _DrawerEntry(
+              icon: Icons.insights_outlined,
+              label: 'Statistiques',
+              onTap: () {
+                Navigator.pop(context);
+                showStatsSheet(context);
+              },
             ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Paramètres',
-            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -95,7 +184,40 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   }
 }
 
-/// Barre supérieure M3 Expressive : 64dp, logo, menu, more_vert.
+class _DrawerEntry extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _DrawerEntry(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.selected = false});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        child: Material(
+          color: selected ? const Color(0xFFD6F25A) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: ListTile(
+            leading: Icon(icon,
+                color: selected ? const Color(0xFF14213D) : Colors.white),
+            title: Text(label,
+                style: TextStyle(
+                    color: selected ? const Color(0xFF14213D) : Colors.white,
+                    fontWeight: FontWeight.w700)),
+            onTap: onTap,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      );
+}
+
+/// Barre supérieure sobre : titre, navigation et actions utiles.
 ///
 /// Le bouton menu ouvre une feuille listant les destinations principales
 /// (dont l'historique, qui n'est pas un onglet de la barre de navigation).
@@ -123,12 +245,19 @@ class ZefirTopBar extends StatelessWidget implements PreferredSizeWidget {
     final scheme = Theme.of(context).colorScheme;
     return AppBar(
       titleSpacing: 8,
-      backgroundColor:
-          scrollUnder ? scheme.surfaceContainer : scheme.surface,
+      backgroundColor: scrollUnder ? scheme.surfaceContainer : scheme.surface,
       leading: IconButton(
         icon: const Icon(Icons.menu_rounded),
         tooltip: 'Navigation',
-        onPressed: onMenu ?? () => _showNavigationSheet(context),
+        onPressed: onMenu ??
+            () {
+              final navigation = ZefirNavigation.maybeOf(context);
+              if (navigation?.openMenu != null) {
+                navigation!.openMenu!();
+              } else {
+                _showNavigationSheet(context);
+              }
+            },
       ),
       title: Row(
         children: [
@@ -141,18 +270,7 @@ class ZefirTopBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: [
-        ...(extraActions ?? const []),
-        IconButton(
-          icon: const Icon(Icons.more_vert),
-          tooltip: 'Plus d’options',
-          onPressed: () => showModalBottomSheet(
-            context: context,
-            showDragHandle: true,
-            builder: (_) => const ZefirMoreSheet(),
-          ),
-        ),
-      ],
+      actions: extraActions ?? const [],
     );
   }
 
@@ -255,8 +373,8 @@ class ZefirMoreSheet extends StatelessWidget {
                     'Traitement entièrement hors-ligne propulsé par '
                     '${AppConstants.engineName}. Aucune vidéo ne quitte votre '
                     'appareil.',
-                    style: TextStyle(
-                        fontSize: 13, color: scheme.onSurfaceVariant),
+                    style:
+                        TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
                   ),
                 ],
               );
@@ -362,4 +480,3 @@ void showStatsSheet(BuildContext context) {
     builder: (_) => const StatsSheet(),
   );
 }
-

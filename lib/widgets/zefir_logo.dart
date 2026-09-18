@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Logo Zefir — éclair « Z » Material Symbols Rounded sur fond primary.
+/// Marque Zefir : deux bandes de compression convergent vers une image légère.
+/// Le dessin est vectoriel et reste net à toutes les tailles.
 class ZefirLogo extends StatelessWidget {
   final double size;
   final bool showWordmark;
@@ -9,35 +10,58 @@ class ZefirLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: scheme.primary,
-            borderRadius: BorderRadius.circular(size * 0.28),
-          ),
-          child: Icon(
-            Icons.bolt_rounded,
-            color: scheme.onPrimary,
-            size: size * 0.58,
-          ),
-        ),
+        CustomPaint(size: Size.square(size), painter: _ZefirMarkPainter()),
         if (showWordmark) ...[
-          const SizedBox(width: 10),
+          SizedBox(width: size * .24),
           Text(
-            'Zefir',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onSurface,
-                  letterSpacing: 0.2,
-                ),
+            'zefir',
+            style: TextStyle(
+              fontFamily: 'serif',
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: size * .68,
+              height: 1,
+              letterSpacing: -.6,
+            ),
           ),
         ],
       ],
     );
   }
+}
+
+class _ZefirMarkPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final unit = size.width;
+    final dark = Paint()..color = const Color(0xFF14213D);
+    final lime = Paint()..color = const Color(0xFFD6F25A);
+    final coral = Paint()..color = const Color(0xFFF26B4B);
+    final radius = Radius.circular(unit * .22);
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, radius), dark);
+
+    final upper = Path()
+      ..moveTo(unit * .18, unit * .27)
+      ..lineTo(unit * .82, unit * .27)
+      ..lineTo(unit * .67, unit * .43)
+      ..lineTo(unit * .18, unit * .43)
+      ..close();
+    canvas.drawPath(upper, lime);
+
+    final lower = Path()
+      ..moveTo(unit * .18, unit * .57)
+      ..lineTo(unit * .82, unit * .57)
+      ..lineTo(unit * .67, unit * .73)
+      ..lineTo(unit * .18, unit * .73)
+      ..close();
+    canvas.drawPath(lower, coral);
+
+    canvas.drawCircle(Offset(unit * .72, unit * .5), unit * .075,
+        Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

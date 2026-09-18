@@ -1,261 +1,161 @@
 import 'package:flutter/material.dart';
 
-/// Material 3 Expressive — Theme clair bleu Zefir.
-/// Les ecrans utilisent les roles du ColorScheme, jamais de couleurs en dur.
+/// La palette Zefir : encre profonde, papier chaud et accent citron.
 class ZefirColors {
-  static const Color primary = Color(0xFF0B57D0);
-  static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color primaryContainer = Color(0xFFD3E3FD);
-  static const Color onPrimaryContainer = Color(0xFF041E49);
-  static const Color secondary = Color(0xFF5A5C7C);
-  static const Color secondaryContainer = Color(0xFFDCE2F9);
-  static const Color onSecondaryContainer = Color(0xFF131C2B);
-  static const Color tertiaryContainer = Color(0xFFFFD8EE);
-  static const Color onTertiaryContainer = Color(0xFF2E1125);
-  static const Color surface = Color(0xFFFAF9FD);
-  static const Color surfaceLow = Color(0xFFF3F3FA);
-  static const Color surfaceDefault = Color(0xFFEEEDF3);
-  static const Color surfaceHigh = Color(0xFFE9E8EF);
-  static const Color surfaceHighest = Color(0xFFE3E2E6);
-  static const Color onSurface = Color(0xFF1B1B1F);
-  static const Color onSurfaceVariant = Color(0xFF44474E);
-  static const Color outline = Color(0xFF74777F);
-  static const Color outlineVariant = Color(0xFFC4C6D0);
-  static const Color inverseSurface = Color(0xFF303034);
-  static const Color inverseOnSurface = Color(0xFFF2F0F4);
-  static const Color inversePrimary = Color(0xFFA8C7FA);
-  static const Color error = Color(0xFFB3261E);
-  static const Color onError = Color(0xFFFFFFFF);
-  static const Color errorContainer = Color(0xFFF9DEDC);
-  static const Color onErrorContainer = Color(0xFF410E0B);
+  static const ink = Color(0xFF14213D);
+  static const paper = Color(0xFFF7F5F0);
+  static const canvas = Color(0xFFECE8DF);
+  static const lime = Color(0xFFD6F25A);
+  static const coral = Color(0xFFF26B4B);
+  static const mutedInk = Color(0xFF647083);
+  static const line = Color(0xFFD5D0C6);
 }
 
-/// Compat ascendante : ancien code AppColors.* redirige vers le scheme clair.
+/// Alias conservés pour les composants existants.
 class AppColors {
-  static const Color background = ZefirColors.surface;
-  static const Color surface = ZefirColors.surfaceLow;
-  static const Color surfaceElevated = ZefirColors.surfaceHigh;
-  static const Color border = ZefirColors.outlineVariant;
-  static const Color borderFocused = ZefirColors.outline;
-  static const Color textPrimary = ZefirColors.onSurface;
-  static const Color textSecondary = ZefirColors.onSurfaceVariant;
-  static const Color textMuted = ZefirColors.outline;
-  static const Color accent = ZefirColors.primary;
-  static const Color accentSubtle = ZefirColors.primaryContainer;
-  static const Color primaryAction = ZefirColors.primary;
-  static const Color danger = ZefirColors.error;
-  static const Color warning = Color(0xFF7A4A00);
-  static const Color info = ZefirColors.primary;
+  static const background = ZefirColors.paper;
+  static const surface = Colors.white;
+  static const surfaceElevated = ZefirColors.canvas;
+  static const border = ZefirColors.line;
+  static const borderFocused = ZefirColors.ink;
+  static const textPrimary = ZefirColors.ink;
+  static const textSecondary = ZefirColors.mutedInk;
+  static const textMuted = ZefirColors.mutedInk;
+  static const accent = ZefirColors.lime;
+  static const accentSubtle = Color(0xFFF0F8C9);
+  static const primaryAction = ZefirColors.ink;
+  static const danger = ZefirColors.coral;
+  static const warning = Color(0xFF9A6700);
+  static const info = ZefirColors.ink;
 }
 
 class AppTheme {
-  static ColorScheme get lightScheme => const ColorScheme.light(
-        primary: ZefirColors.primary,
-        onPrimary: ZefirColors.onPrimary,
-        primaryContainer: ZefirColors.primaryContainer,
-        onPrimaryContainer: ZefirColors.onPrimaryContainer,
-        secondary: ZefirColors.secondary,
-        secondaryContainer: ZefirColors.secondaryContainer,
-        onSecondaryContainer: ZefirColors.onSecondaryContainer,
-        tertiaryContainer: ZefirColors.tertiaryContainer,
-        onTertiaryContainer: ZefirColors.onTertiaryContainer,
-        surface: ZefirColors.surface,
-        onSurface: ZefirColors.onSurface,
-        surfaceContainerLowest: ZefirColors.surface,
-        surfaceContainerLow: ZefirColors.surfaceLow,
-        surfaceContainer: ZefirColors.surfaceDefault,
-        surfaceContainerHigh: ZefirColors.surfaceHigh,
-        surfaceContainerHighest: ZefirColors.surfaceHighest,
-        onSurfaceVariant: ZefirColors.onSurfaceVariant,
-        outline: ZefirColors.outline,
-        outlineVariant: ZefirColors.outlineVariant,
-        inverseSurface: ZefirColors.inverseSurface,
-        onInverseSurface: ZefirColors.inverseOnSurface,
-        inversePrimary: ZefirColors.inversePrimary,
-        error: ZefirColors.error,
-        onError: ZefirColors.onError,
-        errorContainer: ZefirColors.errorContainer,
-        onErrorContainer: ZefirColors.onErrorContainer,
-      );
+  static const _scheme = ColorScheme.light(
+    primary: ZefirColors.ink,
+    onPrimary: Colors.white,
+    primaryContainer: ZefirColors.lime,
+    onPrimaryContainer: ZefirColors.ink,
+    secondary: ZefirColors.coral,
+    onSecondary: Colors.white,
+    secondaryContainer: Color(0xFFFFD8CF),
+    onSecondaryContainer: ZefirColors.ink,
+    surface: ZefirColors.paper,
+    onSurface: ZefirColors.ink,
+    surfaceContainerLowest: Colors.white,
+    surfaceContainerLow: Color(0xFFFFFEFB),
+    surfaceContainer: ZefirColors.canvas,
+    surfaceContainerHigh: Color(0xFFE4E0D7),
+    surfaceContainerHighest: Color(0xFFDCD7CC),
+    onSurfaceVariant: ZefirColors.mutedInk,
+    outline: ZefirColors.line,
+    outlineVariant: ZefirColors.line,
+    error: ZefirColors.coral,
+    onError: Colors.white,
+    errorContainer: Color(0xFFFFDAD2),
+    onErrorContainer: Color(0xFF5C1B0B),
+  );
 
   static ThemeData get lightTheme {
-    final scheme = lightScheme;
+    final text = Typography.material2021()
+        .black
+        .copyWith(
+          displayLarge:
+              const TextStyle(fontFamily: 'serif', fontSize: 42, height: 1.05),
+          headlineMedium:
+              const TextStyle(fontFamily: 'serif', fontSize: 30, height: 1.1),
+          titleLarge: const TextStyle(
+              fontFamily: 'sans-serif',
+              fontSize: 21,
+              fontWeight: FontWeight.w800),
+          titleMedium: const TextStyle(
+              fontFamily: 'sans-serif',
+              fontSize: 16,
+              fontWeight: FontWeight.w700),
+          bodyMedium: const TextStyle(
+              fontFamily: 'sans-serif', fontSize: 14, height: 1.5),
+          labelLarge: const TextStyle(
+              fontFamily: 'sans-serif',
+              fontSize: 13,
+              fontWeight: FontWeight.w800),
+        )
+        .apply(bodyColor: _scheme.onSurface, displayColor: _scheme.onSurface);
+
     return ThemeData(
       useMaterial3: true,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
-      fontFamily: 'Roboto',
+      colorScheme: _scheme,
+      scaffoldBackgroundColor: ZefirColors.paper,
+      textTheme: text,
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: ZefirColors.paper,
+        foregroundColor: _scheme.onSurface,
         elevation: 0,
-        scrolledUnderElevation: 3,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: scheme.onSurface,
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-        ),
-        iconTheme: IconThemeData(color: scheme.onSurface),
+        scrolledUnderElevation: 0,
+        titleTextStyle: text.titleLarge,
       ),
       cardTheme: CardThemeData(
-        color: scheme.surfaceContainerLow,
+        color: _scheme.surfaceContainerLowest,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: ZefirColors.line),
         ),
         margin: EdgeInsets.zero,
       ),
-      dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: ZefirColors.line, space: 1),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 56),
-          shape: const StadiumBorder(),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(48, 40),
-          foregroundColor: scheme.primary,
-          shape: const StadiumBorder(),
+          backgroundColor: ZefirColors.ink,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(64, 52),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: text.labelLarge,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(64, 56),
-          shape: const StadiumBorder(),
-          side: BorderSide(color: scheme.outline, width: 1),
+          minimumSize: const Size(64, 52),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          side: const BorderSide(color: ZefirColors.ink),
         ),
       ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 3,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ZefirColors.line),
+        ),
       ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: ZefirColors.ink,
+        selectedIconTheme: const IconThemeData(color: ZefirColors.ink),
+        unselectedIconTheme: const IconThemeData(color: Color(0xFFBEC6D4)),
+        selectedLabelTextStyle: text.labelLarge?.copyWith(color: Colors.white),
+        unselectedLabelTextStyle:
+            text.labelLarge?.copyWith(color: const Color(0xFFBEC6D4)),
+        indicatorColor: ZefirColors.lime,
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: ZefirColors.ink,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: ZefirColors.lime,
+        foregroundColor: ZefirColors.ink,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
+            borderRadius: BorderRadius.all(Radius.circular(14))),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: scheme.inverseSurface,
-        contentTextStyle:
-            TextStyle(color: scheme.onInverseSurface, fontSize: 14),
-        actionTextColor: scheme.inversePrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: ZefirColors.ink,
+        contentTextStyle: text.bodyMedium?.copyWith(color: Colors.white),
         behavior: SnackBarBehavior.floating,
-      ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-        linearTrackColor: scheme.surfaceContainerHighest,
-        linearMinHeight: 8,
-      ),
-      listTileTheme: ListTileThemeData(
-        iconColor: scheme.onSurfaceVariant,
-        textColor: scheme.onSurface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        minVerticalPadding: 12,
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
-        side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        labelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurfaceVariant,
-        ),
-      ),
-      segmentedButtonTheme: SegmentedButtonThemeData(
-        style: ButtonStyle(
-          shape: const WidgetStatePropertyAll(StadiumBorder()),
-          side: WidgetStatePropertyAll(
-            BorderSide(color: scheme.outline),
-          ),
-          textStyle: const WidgetStatePropertyAll(
-            TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? scheme.onPrimary
-              : scheme.outline,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? scheme.primary
-              : scheme.surfaceContainerHighest,
-        ),
-        trackOutlineColor: WidgetStatePropertyAll(scheme.outline),
-      ),
-      searchBarTheme: SearchBarThemeData(
-        backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerHigh),
-        elevation: const WidgetStatePropertyAll(0),
-        shadowColor: const WidgetStatePropertyAll(Colors.transparent),
-        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
-        shape: const WidgetStatePropertyAll(StadiumBorder()),
-        hintStyle: WidgetStatePropertyAll(
-          TextStyle(color: scheme.onSurfaceVariant, fontSize: 15),
-        ),
-        textStyle: WidgetStatePropertyAll(
-          TextStyle(color: scheme.onSurface, fontSize: 15),
-        ),
-      ),
-      sliderTheme: SliderThemeData(
-        activeTrackColor: scheme.primary,
-        inactiveTrackColor: scheme.surfaceContainerHighest,
-        thumbColor: scheme.primary,
-        overlayColor: scheme.primary.withValues(alpha: 0.12),
-        trackHeight: 4,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surfaceContainer,
-        elevation: 0,
-        height: 80,
-        indicatorColor: scheme.secondaryContainer,
-        indicatorShape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
-            fontSize: 12,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w700
-                : FontWeight.w500,
-            color: states.contains(WidgetState.selected)
-                ? scheme.onSecondaryContainer
-                : scheme.onSurfaceVariant,
-          ),
-        ),
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            size: 24,
-            color: states.contains(WidgetState.selected)
-                ? scheme.onSecondaryContainer
-                : scheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
-        },
       ),
     );
   }
