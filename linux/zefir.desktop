@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Name=Zefir
+GenericName=Compresseur Vidéo
+Comment=Compression vidéo locale haute performance, 100% hors-ligne et confidentielle
+Exec=zefir %u
+Icon=zefir
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;AudioVideoEditing;Utility;
+Keywords=video;compression;ffmpeg;convert;resize;mp4;
+StartupNotify=true
+StartupWMClass=zefir
+MimeType=video/mp4;video/quicktime;video/x-matroska;video/webm;video/x-msvideo;

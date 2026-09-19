@@ -1,12 +1,12 @@
-name: Build & Release Zefir
+name: Build & Release Zefir Multiplatform
 
-# Déclenchement 100% manuel via l'interface GitHub Actions (bouton "Run workflow")
+# Déclenchement 100% manuel via GitHub Actions (bouton "Run workflow")
 on:
   workflow_dispatch:
 
 jobs:
   # =========================================================================
-  # 1. Analyse & Tests
+  # 1. Analyse & Tests Unitaires
   # =========================================================================
   quality-check:
     name: Code Quality & Unit Tests
@@ -35,7 +35,7 @@ jobs:
   # 2. Build Android (Signed APK & AAB)
   # =========================================================================
   build-android:
-    name: Build Signed Android APK & AAB
+    name: Android (Universal APK & AAB)
     needs: quality-check
     runs-on: ubuntu-latest
 
@@ -84,23 +84,23 @@ jobs:
       - name: Build signed App Bundle (Release)
         run: flutter build appbundle --release
 
-      - name: Upload signed APK artifact
+      - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: zefir-release-apk
+          name: zefir-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Upload signed AAB artifact
+      - name: Upload Android AAB
         uses: actions/upload-artifact@v4
         with:
-          name: zefir-release-aab
+          name: zefir-android-aab
           path: build/app/outputs/bundle/release/app-release.aab
 
   # =========================================================================
-  # 3. Build Windows (.exe) & Package avec Inno Setup
+  # 3. Build Windows (x64 Installer & Portable ZIP)
   # =========================================================================
   build-windows:
-    name: Build Windows Release & Create Inno Setup Installer
+    name: Windows (x64 Inno Setup & Portable ZIP)
     needs: quality-check
     runs-on: windows-latest
 
@@ -124,6 +124,12 @@ jobs:
       - name: Build Windows Application (Release)
         run: flutter build windows --release
 
+      - name: Create Portable ZIP Archive
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build\windows\installer | Out-Null
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath build\windows\installer\Zefir-Windows-x64-Portable.zip
+
       - name: Install Inno Setup
         run: choco install innosetup --no-progress
 
@@ -132,8 +138,134 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\iscc.exe" windows/installer/zefir_setup.iss
 
-      - name: Upload Windows Setup Installer (.exe)
+      - name: Upload Windows Packages (Installer & Portable)
         uses: actions/upload-artifact@v4
         with:
-          name: zefir-windows-installer
-          path: build/windows/installer/Zefir-Setup-x64.exe
+          name: zefir-windows-packages
+          path: build/windows/installer/*
+
+  # =========================================================================
+  # 4. Build macOS (Apple Silicon & Intel Universal DMG & ZIP)
+  # =========================================================================
+  build-macos:
+    name: macOS (Universal DMG & ZIP - Apple Silicon & Intel)
+    needs: quality-check
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable macOS Desktop support
+        run: flutter config --enable-macos-desktop
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build macOS Application (Universal Release)
+        run: flutter build macos --release
+
+      - name: Package macOS DMG & ZIP
+        run: |
+          mkdir -p build/macos/artifacts
+          # Création de l'image disque DMG
+          hdiutil create -volname "Zefir" -srcfolder "build/macos/Build/Products/Release/zefir.app" -ov -format UDZO "build/macos/artifacts/Zefir-macOS-Universal.dmg"
+          # Création de l'archive ZIP
+          cd build/macos/Build/Products/Release
+          zip -r -y "../../../artifacts/Zefir-macOS-Universal.zip" "zefir.app"
+
+      - name: Upload macOS Packages (DMG & ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zefir-macos-packages
+          path: build/macos/artifacts/*
+
+  # =========================================================================
+  # 5. Build Linux x86_64 (.deb Debian/Ubuntu & Portable .tar.gz)
+  # =========================================================================
+  build-linux-x64:
+    name: Linux x86_64 (.deb & .tar.gz)
+    needs: quality-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Linux Desktop support
+        run: flutter config --enable-linux-desktop
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Linux Application (Release x86_64)
+        run: flutter build linux --release
+
+      - name: Package Linux .deb & .tar.gz
+        run: |
+          chmod +x linux/packaging/build_deb.sh
+          ./linux/packaging/build_deb.sh amd64
+
+      - name: Upload Linux x86_64 Packages (.deb & .tar.gz)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zefir-linux-x86_64-packages
+          path: build/linux/packages/*
+
+  # =========================================================================
+  # 6. Build Linux ARM64 (.deb & .tar.gz for Raspberry Pi / ARM64)
+  # =========================================================================
+  build-linux-arm64:
+    name: Linux ARM64 (.deb & .tar.gz via QEMU)
+    needs: quality-check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build & Package on ARM64 Linux via QEMU
+        uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: aarch64
+          distro: ubuntu22.04
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get update -y
+            apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev git curl unzip xz-utils
+          run: |
+            git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter
+            export PATH="/opt/flutter/bin:$PATH"
+            git config --global --add safe.directory /opt/flutter
+            git config --global --add safe.directory "$PWD"
+            flutter config --enable-linux-desktop
+            flutter pub get
+            flutter build linux --release
+            chmod +x linux/packaging/build_deb.sh
+            ./linux/packaging/build_deb.sh arm64
+
+      - name: Upload Linux ARM64 Packages (.deb & .tar.gz)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zefir-linux-arm64-packages
+          path: build/linux/packages/*
