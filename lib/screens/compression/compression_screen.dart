@@ -280,44 +280,40 @@ class _CompressionScreenState extends State<CompressionScreen> {
           if (_selectedVideo != null && _status == CompressionStatus.idle)
             IconButton(
               icon: const Icon(Icons.refresh),
-              tooltip: 'Reinitialiser',
+              tooltip: 'Réinitialiser',
               onPressed: _clearSelection,
             ),
         ],
       ),
       floatingActionButton: _selectedVideo == null
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               onPressed: _pickVideo,
-              tooltip: 'Choisir une video',
-              child: const Icon(Icons.edit),
+              tooltip: 'Choisir une vidéo',
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Sélectionner une vidéo'),
             )
           : null,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Video Source Card
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+
+          // Widget colonne gauche / principale : Fichier & Aperçu & Progression
+          final leftColWidgets = <Widget>[
             FileSelectorCard(
               video: _selectedVideo,
               isAnalyzing: _status == CompressionStatus.analyzing,
               onPickVideo: _pickVideo,
               onClear: _clearSelection,
             ),
-
             const SizedBox(height: 16),
-
-            // Error notice if any
             if (_errorMessage != null) ...[
               Card(
                 color: scheme.errorContainer,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 18, color: scheme.onErrorContainer),
+                      Icon(Icons.error_outline, size: 18, color: scheme.onErrorContainer),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -335,8 +331,6 @@ class _CompressionScreenState extends State<CompressionScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
-            // Active compression progress
             if (_status == CompressionStatus.compressing && _progress != null) ...[
               CompressionProgressView(
                 progress: _progress!,
@@ -344,8 +338,6 @@ class _CompressionScreenState extends State<CompressionScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
-            // Completion Summary Report
             if (_status == CompressionStatus.completed && _lastResult != null) ...[
               CompressionSummaryCard(
                 result: _lastResult!,
@@ -355,8 +347,14 @@ class _CompressionScreenState extends State<CompressionScreen> {
               ),
               const SizedBox(height: 16),
             ],
+            if (_selectedVideo != null) ...[
+              VideoPreviewCard(video: _selectedVideo, title: 'Aperçu source'),
+              const SizedBox(height: 16),
+            ],
+          ];
 
-            // Preset Selector (visible when idle or analyzing)
+          // Widget colonne droite / secondaire : Presets & Actions
+          final rightColWidgets = <Widget>[
             if (_status != CompressionStatus.completed && _status != CompressionStatus.compressing) ...[
               PresetSelector(
                 selectedPreset: _selectedPreset,
@@ -368,42 +366,79 @@ class _CompressionScreenState extends State<CompressionScreen> {
                 isEnabled: _status == CompressionStatus.idle,
               ),
               const SizedBox(height: 20),
-
-              // Compression Trigger Action Button
-              FilledButton(
-                onPressed: (_selectedVideo != null && _status == CompressionStatus.idle)
-                    ? _startCompression
-                    : null,
-                child: const Text('Lancer la compression'),
+              SizedBox(
+                height: 52,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFD6F25A),
+                    foregroundColor: const Color(0xFF14213D),
+                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: (_selectedVideo != null && _status == CompressionStatus.idle)
+                      ? _startCompression
+                      : null,
+                  icon: const Icon(Icons.bolt_rounded),
+                  label: const Text('Lancer la compression'),
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               if (_selectedVideo != null) ...[
                 Align(
                   alignment: Alignment.centerLeft,
                   child: ConnectedButtonGroup(
                     firstLabel: 'Favori',
                     firstIcon: Icons.favorite_outline,
-                    onFirst: _lastResult == null
-                        ? null
-                        : () => FavoritesService()
-                            .toggle(_lastResult!.id),
+                    onFirst: _lastResult == null ? null : () => FavoritesService().toggle(_lastResult!.id),
                     secondLabel: 'Partager',
                     secondIcon: Icons.share_outlined,
-                    onSecond: _lastResult == null
-                        ? null
-                        : _shareCompressedVideo,
+                    onSecond: _lastResult == null ? null : _shareCompressedVideo,
                   ),
                 ),
-                const SizedBox(height: 12),
-                VideoPreviewCard(
-                    video: _selectedVideo, title: 'Apercu source'),
-                const SizedBox(height: 12),
-                _RecentList(onOpen: _openDetail),
+                const SizedBox(height: 16),
               ],
-              const SizedBox(height: 24),
             ],
-          ],
-        ),
+            _RecentList(onOpen: _openDetail),
+            const SizedBox(height: 24),
+          ];
+
+          if (isDesktop) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: leftColWidgets,
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: rightColWidgets,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ...leftColWidgets,
+                ...rightColWidgets,
+              ],
+            ),
+          );
+        },
       ),
     );
   }

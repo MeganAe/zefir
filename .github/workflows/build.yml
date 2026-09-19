@@ -1,15 +1,42 @@
 name: Build & Release Zefir
 
+# Déclenchement 100% manuel via l'interface GitHub Actions (bouton "Run workflow")
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Analyze, Test, Build Signed APK + AAB
+  # =========================================================================
+  # 1. Analyse & Tests
+  # =========================================================================
+  quality-check:
+    name: Code Quality & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Run unit tests
+        run: flutter test
+
+  # =========================================================================
+  # 2. Build Android (Signed APK & AAB)
+  # =========================================================================
+  build-android:
+    name: Build Signed Android APK & AAB
+    needs: quality-check
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +49,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Flutter (version épinglée)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.5'
@@ -32,15 +59,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test
-
-      # ----- Signature release (keystore éphémère, régénéré à chaque build) -----
-      # Remplaçable plus tard par des secrets GitHub (KEYSTORE_BASE64, etc.)
-      # sans toucher au reste du pipeline.
       - name: Generate ephemeral release keystore
         run: |
           keytool -genkeypair -v \
@@ -78,3 +96,44 @@ jobs:
           name: zefir-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
 
+  # =========================================================================
+  # 3. Build Windows (.exe) & Package avec Inno Setup
+  # =========================================================================
+  build-windows:
+    name: Build Windows Release & Create Inno Setup Installer
+    needs: quality-check
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Enable Windows Desktop support
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows Application (Release)
+        run: flutter build windows --release
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress
+
+      - name: Compile Installer with Inno Setup
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\iscc.exe" windows/installer/zefir_setup.iss
+
+      - name: Upload Windows Setup Installer (.exe)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zefir-windows-installer
+          path: build/windows/installer/Zefir-Setup-x64.exe

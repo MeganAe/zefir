@@ -249,9 +249,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: const ZefirTopBar(title: 'Paramètres'),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            children: [
           _buildSectionHeader('Profil par defaut'),
           const SizedBox(height: 8),
           Card(
@@ -584,7 +587,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildSectionHeader(String title) {
